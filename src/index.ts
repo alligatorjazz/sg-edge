@@ -1,9 +1,20 @@
 import sgMail, { MailDataRequired } from "@sendgrid/mail";
 import sgClient from "@sendgrid/client";
-import { testEmails } from "./config";
 import { ClientRequest } from "@sendgrid/client/src/request";
 import { createWriteStream } from "fs";
 import https from "https";
+type SendgridContact = { email: string } & Partial<{
+	id: string,
+	city: string,
+	country: string,
+	first_name: string,
+	last_name: string,
+	postal_code: string,
+	state_province_region: string,
+	created_at: string,
+	updated_at: string,
+	custom_fields: Record<string, unknown>
+}>
 
 let loaded = false;
 export function loadSendgridAPI(token?: string) {
@@ -14,11 +25,13 @@ export function loadSendgridAPI(token?: string) {
 	else { throw new Error("Sendgrid token not found."); }
 	loaded = true;
 }
+
 function checkLoaded() {
 	if (!loaded) {
-		throw new Error("Function called before Sendgrid API was loaded.");
+		throw new Error("Sendgrid function called before Sendgrid API was loaded.");
 	}
 }
+
 export async function createJSONContactsExport(): Promise<string> {
 	checkLoaded();
 	const request: ClientRequest = {
@@ -81,12 +94,11 @@ export async function fetchAllContacts() {
 	return files;
 }
 
-export async function sendEmail(...messages: MailDataRequired[]) {
+export async function sendEmails(messages: MailDataRequired[], interval = 150) {
 	checkLoaded();
 	// Sendgrid has a default rate limit of 600 requests per minute.
 	// That works out to 100ms between requests, but some padding has been
 	// added for safety. 
-	const interval = 150;
 	return Promise.all(messages.map(async msg => {
 		return new Promise((resolve, reject) => {
 			setTimeout(() => {
@@ -102,3 +114,71 @@ export async function sendEmail(...messages: MailDataRequired[]) {
 		});
 	}));
 }
+
+
+
+export async function addContact(contact: SendgridContact) {
+	const request: ClientRequest = {
+		url: "/v3/marketing/contacts",
+		method: "PUT",
+		body: { contacts: [contact] }
+	};
+
+	const result = await sgClient.request(request);
+
+	if ("job_id" in result[0].body) {
+		const jobId = result[0].body["job_id"] as string;
+		return jobId;
+	} else {
+		throw new Error("Could not add contact. Response: " + JSON.stringify(result, null, 4));
+	}
+}
+
+// export async function deleteContacts(...ids: string[]) {
+// 	const request: ClientRequest = {
+// 		url: "/v3/marketing/contacts",
+// 		method: "DELETE",
+// 		qs: { ids: ids.join(", ") }
+// 	};
+
+// 	const result = await sgClient.request(request);
+
+// 	if ("job_id" in result[0].body) {
+// 		const jobId = result[0].body["job_id"] as string;
+// 		return jobId;
+// 	} else {
+// 		throw new Error("Could not delete contacts. Response: " + JSON.stringify(result, null, 4));
+// 	}
+// }
+
+// export async function getContactsByEmail(...emails: string[]) {
+// 	const request: ClientRequest = {
+// 		url: "/v3/marketing/contacts/search/emails",
+// 		method: "POST",
+// 		body: { emails }
+// 	};
+
+// 	const result = await sgClient.request(request);
+// 	if (result[0].statusCode == 200 && "result" in result[0].body) {
+// 		return result[0].body["result"] as SendgridContact & { id: string };
+// 	} else {
+// 		throw new Error("Could not get contacts by email. Response: " + JSON.stringify(result, null, 4));
+// 	}
+// }
+
+// export async function checkJobStatus(jobId: string) {
+// 	const request: ClientRequest = {
+// 		url: `/v3/marketing/contacts/imports/${jobId}`,
+// 		method: "GET",
+// 	};
+
+// 	const result = await sgClient.request(request);
+
+// 	if ("status" in result[0].body && "started_at" in result[0].body && "job_type" in result[0].body) {
+// 		const { status, started_at, job_type } = result[0].body as Record<string, string>;
+// 		return { status, started_at, job_type };
+// 	}
+// 	else {
+// 		throw new Error("Could not fetch job status. Response: " + JSON.stringify(result, null, 4));
+// 	}
+// }
