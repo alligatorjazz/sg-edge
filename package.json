@@ -1,6 +1,6 @@
 {
 	"name": "@alligatorjazz/sg-edge",
-	"version": "1.0.0-alpha",
+	"version": "1.1.0",
 	"description": "Utility functions for using the Sendgrid API on edge / cloud functions.",
 	"main": "dist/index.js",
 	"scripts": {

@@ -25,12 +25,20 @@ describe("email sends", () => {
 	});
 });
 
-describe("adding & deleting contacts", () => {
+describe("adding contacts", () => {
 	const testEmail = "webmaster@falchionstudios.com";
 	test.sequential("add contact", async () => {
 		loadSendgridAPI(process.env["TEST_API_KEY"]);
 		const jobId = await addContact({ email: testEmail });
 		expect(jobId).toBeTruthy();
 	});
-
 });
+
+test("get contacts by email", async () => {
+	const testEmail = "webmaster@falchionstudios.com";
+	loadSendgridAPI(process.env["TEST_API_KEY"]);
+	await addContact({email: testEmail});
+	await sleep(5000);
+	const result = await getContactsByEmail(testEmail);
+	expect(result[testEmail].contact).toBeTruthy();
+}, 1000 * 30);

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkJobStatus = exports.getContactsByEmail = exports.deleteContacts = exports.addContact = exports.sendEmails = exports.fetchAllContacts = exports.fetchJSONContactsExport = exports.createJSONContactsExport = exports.loadSendgridAPI = void 0;
+exports.addContact = exports.sendEmails = exports.fetchAllContacts = exports.fetchJSONContactsExport = exports.createJSONContactsExport = exports.loadSendgridAPI = void 0;
 const mail_1 = __importDefault(require("@sendgrid/mail"));
 const client_1 = __importDefault(require("@sendgrid/client"));
 const fs_1 = require("fs");
@@ -140,55 +140,44 @@ function addContact(contact) {
     });
 }
 exports.addContact = addContact;
-function deleteContacts(...ids) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const request = {
-            url: "/v3/marketing/contacts",
-            method: "DELETE",
-            qs: { ids: ids.join(", ") }
-        };
-        const result = yield client_1.default.request(request);
-        if ("job_id" in result[0].body) {
-            const jobId = result[0].body["job_id"];
-            return jobId;
-        }
-        else {
-            throw new Error("Could not delete contacts. Response: " + JSON.stringify(result, null, 4));
-        }
-    });
-}
-exports.deleteContacts = deleteContacts;
-function getContactsByEmail(...emails) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const request = {
-            url: "/v3/marketing/contacts/search/emails",
-            method: "POST",
-            body: { emails }
-        };
-        const result = yield client_1.default.request(request);
-        if (result[0].statusCode == 200 && "result" in result[0].body) {
-            return result[0].body["result"];
-        }
-        else {
-            throw new Error("Could not get contacts by email. Response: " + JSON.stringify(result, null, 4));
-        }
-    });
-}
-exports.getContactsByEmail = getContactsByEmail;
-function checkJobStatus(jobId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const request = {
-            url: `/v3/marketing/contacts/imports/${jobId}`,
-            method: "GET",
-        };
-        const result = yield client_1.default.request(request);
-        if ("status" in result[0].body && "started_at" in result[0].body && "job_type" in result[0].body) {
-            const { status, started_at, job_type } = result[0].body;
-            return { status, started_at, job_type };
-        }
-        else {
-            throw new Error("Could not fetch job status. Response: " + JSON.stringify(result, null, 4));
-        }
-    });
-}
-exports.checkJobStatus = checkJobStatus;
+// export async function deleteContacts(...ids: string[]) {
+// 	const request: ClientRequest = {
+// 		url: "/v3/marketing/contacts",
+// 		method: "DELETE",
+// 		qs: { ids: ids.join(", ") }
+// 	};
+// 	const result = await sgClient.request(request);
+// 	if ("job_id" in result[0].body) {
+// 		const jobId = result[0].body["job_id"] as string;
+// 		return jobId;
+// 	} else {
+// 		throw new Error("Could not delete contacts. Response: " + JSON.stringify(result, null, 4));
+// 	}
+// }
+// export async function getContactsByEmail(...emails: string[]) {
+// 	const request: ClientRequest = {
+// 		url: "/v3/marketing/contacts/search/emails",
+// 		method: "POST",
+// 		body: { emails }
+// 	};
+// 	const result = await sgClient.request(request);
+// 	if (result[0].statusCode == 200 && "result" in result[0].body) {
+// 		return result[0].body["result"] as SendgridContact & { id: string };
+// 	} else {
+// 		throw new Error("Could not get contacts by email. Response: " + JSON.stringify(result, null, 4));
+// 	}
+// }
+// export async function checkJobStatus(jobId: string) {
+// 	const request: ClientRequest = {
+// 		url: `/v3/marketing/contacts/imports/${jobId}`,
+// 		method: "GET",
+// 	};
+// 	const result = await sgClient.request(request);
+// 	if ("status" in result[0].body && "started_at" in result[0].body && "job_type" in result[0].body) {
+// 		const { status, started_at, job_type } = result[0].body as Record<string, string>;
+// 		return { status, started_at, job_type };
+// 	}
+// 	else {
+// 		throw new Error("Could not fetch job status. Response: " + JSON.stringify(result, null, 4));
+// 	}
+// }

@@ -151,20 +151,24 @@ export async function addContact(contact: SendgridContact) {
 // 	}
 // }
 
-// export async function getContactsByEmail(...emails: string[]) {
-// 	const request: ClientRequest = {
-// 		url: "/v3/marketing/contacts/search/emails",
-// 		method: "POST",
-// 		body: { emails }
-// 	};
+export async function getContactsByEmail(...emails: string[]): Promise<{
+	[email: string]: { contact: SendgridContact }
+}> {
+	const request: ClientRequest = {
+		url: "/v3/marketing/contacts/search/emails",
+		method: "POST",
+		body: { emails }
+	};
 
-// 	const result = await sgClient.request(request);
-// 	if (result[0].statusCode == 200 && "result" in result[0].body) {
-// 		return result[0].body["result"] as SendgridContact & { id: string };
-// 	} else {
-// 		throw new Error("Could not get contacts by email. Response: " + JSON.stringify(result, null, 4));
-// 	}
-// }
+	const result = await sgClient.request(request);
+	if (result[0].statusCode == 200 && "result" in result[0].body) {
+		return result[0].body["result"] as {
+			[email: string]: { contact: SendgridContact }
+		};
+	} else {
+		throw new Error("Could not get contacts by email. Response: " + JSON.stringify(result, null, 4));
+	}
+}
 
 // export async function checkJobStatus(jobId: string) {
 // 	const request: ClientRequest = {
