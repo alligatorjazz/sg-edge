@@ -20,4 +20,10 @@ export declare function fetchJSONContactsExport(id: string): Promise<string[]>;
 export declare function fetchAllContacts(): Promise<import("fs").WriteStream[]>;
 export declare function sendEmails(messages: MailDataRequired[], interval?: number): Promise<unknown[]>;
 export declare function addContact(contact: SendgridContact): Promise<string>;
+export declare function getContactsByEmail(...emails: string[]): Promise<{
+    [email: string]: {
+        contact: SendgridContact;
+    };
+}>;
+export declare function checkIfUnsubscribed(email: string): Promise<boolean>;
 export {};

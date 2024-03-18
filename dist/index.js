@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addContact = exports.sendEmails = exports.fetchAllContacts = exports.fetchJSONContactsExport = exports.createJSONContactsExport = exports.loadSendgridAPI = void 0;
+exports.checkIfUnsubscribed = exports.getContactsByEmail = exports.addContact = exports.sendEmails = exports.fetchAllContacts = exports.fetchJSONContactsExport = exports.createJSONContactsExport = exports.loadSendgridAPI = void 0;
 const mail_1 = __importDefault(require("@sendgrid/mail"));
 const client_1 = __importDefault(require("@sendgrid/client"));
 const fs_1 = require("fs");
@@ -154,19 +154,68 @@ exports.addContact = addContact;
 // 		throw new Error("Could not delete contacts. Response: " + JSON.stringify(result, null, 4));
 // 	}
 // }
-// export async function getContactsByEmail(...emails: string[]) {
-// 	const request: ClientRequest = {
-// 		url: "/v3/marketing/contacts/search/emails",
-// 		method: "POST",
-// 		body: { emails }
-// 	};
-// 	const result = await sgClient.request(request);
-// 	if (result[0].statusCode == 200 && "result" in result[0].body) {
-// 		return result[0].body["result"] as SendgridContact & { id: string };
-// 	} else {
-// 		throw new Error("Could not get contacts by email. Response: " + JSON.stringify(result, null, 4));
-// 	}
-// }
+function getContactsByEmail(...emails) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const request = {
+            url: "/v3/marketing/contacts/search/emails",
+            method: "POST",
+            body: { emails }
+        };
+        const result = yield client_1.default.request(request);
+        if (result[0].statusCode == 200 && "result" in result[0].body) {
+            return result[0].body["result"];
+        }
+        else {
+            throw new Error("Could not get contacts by email. Response: " + JSON.stringify(result, null, 4));
+        }
+    });
+}
+exports.getContactsByEmail = getContactsByEmail;
+function checkIfUnsubscribed(email) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // TODO: add second request for global unsubscribe endpoint
+        // check for global unsubscribe
+        const checkGlobalUnsubscribe = () => __awaiter(this, void 0, void 0, function* () {
+            const request = {
+                url: `/v3/asm/suppressions/global/${email}`,
+                method: "GET"
+            };
+            const [response] = yield client_1.default.request(request);
+            // console.log(JSON.stringify(response.body, null, 4));
+            if (response.statusCode !== 200) {
+                console.error(`Unable to retrieve global unsubscribe info for ${email} - assuming unsubscribed`);
+                return true;
+            }
+            if ("recipient_email" in response.body) {
+                return true;
+            }
+            return false;
+        });
+        const checkGroupUnsubscribe = () => __awaiter(this, void 0, void 0, function* () {
+            const request = {
+                url: `/v3/asm/suppressions/${email}`,
+                method: "GET"
+            };
+            const [response] = yield client_1.default.request(request);
+            // console.log(JSON.stringify(response.body, null, 4));
+            if (response.statusCode !== 200) {
+                console.error(`Unable to retrieve unsubscribe info for ${email} - assuming unsubscribed`);
+                return true;
+            }
+            if (response.body.suppressions.filter(suppression => suppression.suppressed).length > 0) {
+                return true;
+            }
+            return false;
+        });
+        if ((yield checkGlobalUnsubscribe())) {
+            return true;
+        }
+        else {
+            return yield checkGroupUnsubscribe();
+        }
+    });
+}
+exports.checkIfUnsubscribed = checkIfUnsubscribed;
 // export async function checkJobStatus(jobId: string) {
 // 	const request: ClientRequest = {
 // 		url: `/v3/marketing/contacts/imports/${jobId}`,

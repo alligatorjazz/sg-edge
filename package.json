@@ -1,11 +1,12 @@
 {
 	"name": "@alligatorjazz/sg-edge",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "Utility functions for using the Sendgrid API on edge / cloud functions.",
 	"main": "dist/index.js",
 	"scripts": {
 		"test": "vitest",
-		"build": "tsc"
+		"build": "tsc",
+		"publish": "npm run build && npm publish"
 	},
 	"author": "Falchion Studios",
 	"license": "UNLICENSED",
