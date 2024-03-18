@@ -1,7 +1,7 @@
 import { MailDataRequired } from "@sendgrid/mail";
 import { describe } from "node:test";
 import { expect, test } from "vitest";
-import { addContact, checkJobStatus, deleteContacts, getContactsByEmail, loadSendgridAPI, sendEmails } from "../src";
+import { addContact, getContactsByEmail, loadSendgridAPI, sendEmails } from "../src";
 import { sleep } from "../src/lib";
 test("test api key present", () => {
 	expect(typeof process.env["TEST_API_KEY"] === "string" && process.env["TEST_API_KEY"].length > 2);
@@ -42,3 +42,9 @@ test("get contacts by email", async () => {
 	const result = await getContactsByEmail(testEmail);
 	expect(result[testEmail].contact).toBeTruthy();
 }, 1000 * 30);
+
+// test("check unsubscribed", async () => {
+// 	const testEmail = "webmaster@falchionstudios.com";
+// 	loadSendgridAPI(process.env["TEST_API_KEY"]);
+// 	expect(await checkIfUnsubscribed(testEmail)).toBe(true);
+// }, 1000 * 30);

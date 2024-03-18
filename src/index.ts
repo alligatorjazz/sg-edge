@@ -154,6 +154,7 @@ export async function addContact(contact: SendgridContact) {
 export async function getContactsByEmail(...emails: string[]): Promise<{
 	[email: string]: { contact: SendgridContact }
 }> {
+
 	const request: ClientRequest = {
 		url: "/v3/marketing/contacts/search/emails",
 		method: "POST",
@@ -170,6 +171,65 @@ export async function getContactsByEmail(...emails: string[]): Promise<{
 	}
 }
 
+
+export async function checkIfUnsubscribed(email: string) {
+	// TODO: add second request for global unsubscribe endpoint
+	// check for global unsubscribe
+	const checkGlobalUnsubscribe = async () => {
+		const request: ClientRequest = {
+			url: `/v3/asm/suppressions/global/${email}`,
+			method: "GET"
+		};
+
+		const [response] = await sgClient.request(request) as [{
+			"statusCode": number,
+			"body": { "recipient_email": string }
+		}, unknown];
+
+		// console.log(JSON.stringify(response.body, null, 4));
+
+		if (response.statusCode !== 200) {
+			console.error(`Unable to retrieve global unsubscribe info for ${email} - assuming unsubscribed`);
+			return true;
+		}
+
+		if ("recipient_email" in response.body) {
+			return true;
+		}
+
+		return false;
+	};
+
+	const checkGroupUnsubscribe = async () => {
+		const request: ClientRequest = {
+			url: `/v3/asm/suppressions/${email}`,
+			method: "GET"
+		};
+
+		const [response] = await sgClient.request(request) as [{
+			"statusCode": number,
+			"body": { "suppressions": { "suppressed": boolean }[] }
+		}, unknown];
+
+		// console.log(JSON.stringify(response.body, null, 4));
+
+		if (response.statusCode !== 200) {
+			console.error(`Unable to retrieve unsubscribe info for ${email} - assuming unsubscribed`);
+			return true;
+		}
+
+		if (response.body.suppressions.filter(suppression => suppression.suppressed).length > 0) {
+			return true;
+		}
+
+		return false;
+	};
+	if ((await checkGlobalUnsubscribe())) {
+		return true;
+	} else {
+		return await checkGroupUnsubscribe();
+	}
+}
 // export async function checkJobStatus(jobId: string) {
 // 	const request: ClientRequest = {
 // 		url: `/v3/marketing/contacts/imports/${jobId}`,
